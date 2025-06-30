@@ -1,7 +1,7 @@
 const mongo = require('mongoose');
 
 const MaterialSchema = new mongo.Schema({
-    materialID:{type: String, required: true, unique: true},
+    materialId:{type: String, required: true, unique: true},
     mName:{type:String, required: true },
     mDesc:{type:String, required:true},
     mPrice:{type:Number, required:true, default:0}, 
