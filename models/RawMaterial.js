@@ -1,17 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const orderSchema = new Schema({
+const rawMaterialOrderSchema = new Schema({
   orderNumber: {
     type: String,
     required: true,
     unique: true,
     trim: true
-  },
-  buyerId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
   },
   artisanId: {
     type: Schema.Types.ObjectId,
@@ -19,9 +14,9 @@ const orderSchema = new Schema({
     required: true
   },
   items: [{
-    productId: {
+    rawMaterialId: {
       type: Schema.Types.ObjectId,
-      ref: 'Product',
+      ref: 'RawMaterial',
       required: true
     },
     quantity: {
@@ -61,4 +56,4 @@ const orderSchema = new Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model('RawMaterialOrder', rawMaterialOrderSchema);

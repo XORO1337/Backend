@@ -1,13 +1,38 @@
-const mongo = require('mongoose');
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const MaterialSchema = new mongo.Schema({
-    materialId:{type: String, required: true, unique: true},
-    mName:{type:String, required: true },
-    mDesc:{type:String, required:true},
-    mPrice:{type:Number, required:true, default:0}, 
-    mImage:{type:Buffer}, // For Image of Materials
-    mAdded:{type: Date, default:Date.now} 
+const rawMaterialSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  description: {
+    type: String,
+    trim: true
+  },
+  category: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  pricePerUnit: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  stock: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  supplierId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    sparse: true
+  }
+}, {
+  timestamps: true
+});
 
-})
-
-module.exports = mongo.model('Material', MaterialSchema);
+module.exports = mongoose.model('RawMaterial', rawMaterialSchema);
