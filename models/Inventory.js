@@ -26,7 +26,7 @@ const inventorySchema = new Schema({
   }],
   rawMaterials: [{
     rawMaterialId: {
-      type: Schema.TypesObjectId,
+      type: Schema.Types.ObjectId,
       ref: 'RawMaterial',
       required: true
     },
