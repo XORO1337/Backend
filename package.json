@@ -1,16 +1,24 @@
 {
-  "name": "back",
+  "name": "artisan-management-backend",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["artisan", "management", "api", "backend", "mongodb", "express"],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Backend API for Artisan Management System",
   "dependencies": {
     "express": "^5.1.0",
-    "mongoose": "^8.16.1"
+    "mongoose": "^8.16.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.3",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }

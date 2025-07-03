@@ -1,16 +1,20 @@
-const mongo = require('mongoose');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+dotenv.config();
 
-async function ConnectDB(){
-    try{
-        await mongo.connect('mongodb://localhost:27017/rootsReach',{
+const connectDB = async (mongo_URI) => {
+    try {
+        const conn = await mongoose.connect(mongo_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-        })  
-    }
-    catch(err){
-        console.error(`Error DB Connection : ${err}`);
-    }
+        });
 
-}
-    
-module.exports = ConnectDB;
+        console.log(`MongoDB Connected: ${conn.connection.host}`);
+        return conn;
+    } catch (error) {
+        console.error(`Error connecting to MongoDB: ${error.message}`);
+        throw error;
+    }
+};
+
+module.exports = connectDB;
