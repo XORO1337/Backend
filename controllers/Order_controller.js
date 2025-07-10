@@ -458,6 +458,25 @@ class OrderController {
       });
     }
   }
+
+  // Get orders by payment status
+  static async getOrdersByPaymentStatus(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const result = await OrderService.getOrdersByPaymentStatus(req.params.paymentStatus, page, limit);
+      res.status(200).json({
+        success: true,
+        message: 'Orders retrieved successfully',
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
 }
 
 module.exports = OrderController;

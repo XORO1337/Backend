@@ -646,6 +646,31 @@ class OrderService {
       throw new Error(`Error generating order summary: ${error.message}`);
     }
   }
+
+  // Get orders by payment status
+  static async getOrdersByPaymentStatus(paymentStatus, page = 1, limit = 10) {
+    try {
+      const skip = (page - 1) * limit;
+      const orders = await Order.find({ paymentStatus })
+        .populate('buyerId', 'name email phone')
+        .populate('artisanId', 'name email phone')
+        .populate('items.productId', 'name price category')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+      const total = await Order.countDocuments({ paymentStatus });
+
+      return {
+        orders,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalCount: total
+      };
+    } catch (error) {
+      throw new Error(`Error fetching orders by payment status: ${error.message}`);
+    }
+  }
 }
 
 module.exports = OrderService;

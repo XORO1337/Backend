@@ -327,6 +327,96 @@ class ProductController {
       });
     }
   }
+
+  // Delete products by artisan
+  static async deleteProductsByArtisan(req, res) {
+    try {
+      const result = await ProductService.deleteProductsByArtisan(req.params.artisanId);
+      res.status(200).json({
+        success: true,
+        message: result.message,
+        data: { deletedCount: result.deletedCount }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // Get products by status
+  static async getProductsByStatus(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const result = await ProductService.getProductsByStatus(req.params.status, page, limit);
+      res.status(200).json({
+        success: true,
+        message: 'Products retrieved successfully',
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // Update product status
+  static async updateProductStatus(req, res) {
+    try {
+      const { status } = req.body;
+      if (!status) {
+        return res.status(400).json({
+          success: false,
+          message: 'Status is required'
+        });
+      }
+
+      const product = await ProductService.updateProductStatus(req.params.id, status);
+      res.status(200).json({
+        success: true,
+        message: 'Product status updated successfully',
+        data: product
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // Get products by price range
+  static async getProductsByPriceRange(req, res) {
+    try {
+      const minPrice = req.query.minPrice ? parseFloat(req.query.minPrice) : undefined;
+      const maxPrice = req.query.maxPrice ? parseFloat(req.query.maxPrice) : undefined;
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+
+      if (minPrice === undefined && maxPrice === undefined) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one price parameter (minPrice or maxPrice) is required'
+        });
+      }
+
+      const result = await ProductService.getProductsByPriceRange(minPrice, maxPrice, page, limit);
+      res.status(200).json({
+        success: true,
+        message: 'Products retrieved successfully',
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
 }
 
 module.exports = ProductController;

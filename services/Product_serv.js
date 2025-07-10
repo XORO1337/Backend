@@ -358,6 +358,93 @@ class ProductService {
       throw new Error(`Error fetching popular products: ${error.message}`);
     }
   }
+
+  // Delete all products by artisan
+  static async deleteProductsByArtisan(artisanId) {
+    try {
+      const result = await Product.deleteMany({ artisanId });
+      return { 
+        message: `${result.deletedCount} products deleted successfully`,
+        deletedCount: result.deletedCount
+      };
+    } catch (error) {
+      throw new Error(`Error deleting products by artisan: ${error.message}`);
+    }
+  }
+
+  // Get products by status
+  static async getProductsByStatus(status, page = 1, limit = 10) {
+    try {
+      const skip = (page - 1) * limit;
+      const products = await Product.find({ status })
+        .populate('artisanId', 'name email phone')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+      const total = await Product.countDocuments({ status });
+
+      return {
+        products,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalCount: total
+      };
+    } catch (error) {
+      throw new Error(`Error fetching products by status: ${error.message}`);
+    }
+  }
+
+  // Update product status
+  static async updateProductStatus(id, status) {
+    try {
+      const product = await Product.findByIdAndUpdate(
+        id,
+        { status },
+        { new: true, runValidators: true }
+      ).populate('artisanId', 'name email phone');
+
+      if (!product) {
+        throw new Error('Product not found');
+      }
+      return product;
+    } catch (error) {
+      throw new Error(`Error updating product status: ${error.message}`);
+    }
+  }
+
+  // Get products by price range
+  static async getProductsByPriceRange(minPrice, maxPrice, page = 1, limit = 10) {
+    try {
+      const skip = (page - 1) * limit;
+      const query = {};
+
+      if (minPrice !== undefined && maxPrice !== undefined) {
+        query.price = { $gte: minPrice, $lte: maxPrice };
+      } else if (minPrice !== undefined) {
+        query.price = { $gte: minPrice };
+      } else if (maxPrice !== undefined) {
+        query.price = { $lte: maxPrice };
+      }
+
+      const products = await Product.find(query)
+        .populate('artisanId', 'name email phone')
+        .skip(skip)
+        .limit(limit)
+        .sort({ price: 1 });
+
+      const total = await Product.countDocuments(query);
+
+      return {
+        products,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalCount: total
+      };
+    } catch (error) {
+      throw new Error(`Error fetching products by price range: ${error.message}`);
+    }
+  }
 }
 
 module.exports = ProductService;

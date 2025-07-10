@@ -34,15 +34,30 @@ app.use((req, res, next) => {
   }
 });
 
-// Routes
+// Define routes
+console.log('Defining user routes...');
 app.use('/api/users', userRoutes);
+
+console.log('Defining artisan routes...');
 app.use('/api/artisans', artisanRoutes);
-app.use('/api/distributors', distributorRoutes);
+
+console.log('Defining product routes...');
 app.use('/api/products', productRoutes);
+
+console.log('Defining order routes...');
 app.use('/api/orders', orderRoutes);
+
+console.log('Defining raw material routes...');
 app.use('/api/raw-material-orders', rawMaterialRoutes);
+
+console.log('Defining material routes...');
 app.use('/api/materials', materialRoutes);
+
+console.log('Defining inventory routes...');
 app.use('/api/inventory', inventoryRoutes);
+
+console.log('Defining distributor routes...');
+app.use('/api/distributors', distributorRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

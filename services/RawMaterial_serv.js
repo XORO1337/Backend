@@ -718,6 +718,30 @@ class RawMaterialService {
       throw new Error(`Error updating bulk raw material order status: ${error.message}`);
     }
   }
+
+  // Get raw material orders by payment status
+  static async getRawMaterialOrdersByPaymentStatus(paymentStatus, page = 1, limit = 10) {
+    try {
+      const skip = (page - 1) * limit;
+      const orders = await RawMaterialOrder.find({ paymentStatus })
+        .populate('artisanId', 'name email phone')
+        .populate('items.rawMaterialId', 'name pricePerUnit category')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+      const total = await RawMaterialOrder.countDocuments({ paymentStatus });
+
+      return {
+        orders,
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalCount: total
+      };
+    } catch (error) {
+      throw new Error(`Error fetching raw material orders by payment status: ${error.message}`);
+    }
+  }
 }
 
 module.exports = RawMaterialService;

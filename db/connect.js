@@ -18,3 +18,5 @@ const connectDB = async (mongo_URI) => {
 };
 
 module.exports = connectDB;
+
+// LocalHost and MongoDB Atlas DB on both can be used
