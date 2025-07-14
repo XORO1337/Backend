@@ -1,8 +1,12 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
 require('dotenv').config();
 
 // Import routes
+const authRoutes = require('./routes/Auth_route');
 const userRoutes = require('./routes/User_route');
 const artisanRoutes = require('./routes/Artisan_route');
 const distributorRoutes = require('./routes/Distributor_route');
@@ -11,30 +15,81 @@ const orderRoutes = require('./routes/Order_route');
 const rawMaterialRoutes = require('./routes/RawMaterial_route');
 const materialRoutes = require('./routes/Material_route');
 const inventoryRoutes = require('./routes/Inventory_route');
+const backupRoutes = require('./routes/Backup_route');
+
+// Import middleware
+const { generalLimit } = require('./middleware/rateLimiting');
+const passport = require('./config/passport');
 
 // Database connection
-const connectDB = require('./db/connect');
+const { connectDualDB } = require('./db/connect');
+const MongoBackupService = require('./services/mongoBackupService');
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
 
-// CORS middleware
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
+// Rate limiting
+app.use(generalLimit);
+
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      process.env.CLIENT_URL
+    ].filter(Boolean);
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'Cache-Control']
+};
+
+app.use(cors(corsOptions));
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Cookie parser
+app.use(cookieParser());
+
+// Passport middleware
+app.use(passport.initialize());
+
+// Request logging middleware (development only)
+if (process.env.NODE_ENV === 'development') {
+  app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
-  }
-});
+  });
+}
 
 // Define routes
+console.log('Defining authentication routes...');
+app.use('/api/auth', authRoutes);
+
 console.log('Defining user routes...');
 app.use('/api/users', userRoutes);
 
@@ -59,12 +114,16 @@ app.use('/api/inventory', inventoryRoutes);
 console.log('Defining distributor routes...');
 app.use('/api/distributors', distributorRoutes);
 
+console.log('Defining backup routes...');
+app.use('/api/backups', backupRoutes);
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Backend API is running successfully',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    version: '2.0.0'
   });
 });
 
@@ -73,8 +132,17 @@ app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'Welcome to the Artisan Management System API',
-    version: '1.0.0',
+    version: '2.0.0',
+    features: [
+      'JWT Authentication',
+      'Google OAuth 2.0',
+      'Phone Number Verification',
+      'Role-based Authorization',
+      'Identity Verification',
+      'Address Management'
+    ],
     endpoints: {
+      auth: '/api/auth',
       users: '/api/users',
       artisans: '/api/artisans',
       distributors: '/api/distributors',
@@ -90,16 +158,68 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
+  console.error('Error:', err);
+  
+  // Mongoose validation error
+  if (err.name === 'ValidationError') {
+    const errors = Object.values(err.errors).map(e => e.message);
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors
+    });
+  }
+  
+  // Mongoose duplicate key error
+  if (err.code === 11000) {
+    const field = Object.keys(err.keyValue)[0];
+    return res.status(400).json({
+      success: false,
+      message: `${field} already exists`
+    });
+  }
+  
+  // JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+  
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      success: false,
+      message: 'Token expired'
+    });
+  }
+  
+  // Multer errors
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      success: false,
+      message: 'File too large. Maximum size is 5MB'
+    });
+  }
+  
+  // CORS errors
+  if (err.message && err.message.includes('CORS')) {
+    return res.status(403).json({
+      success: false,
+      message: 'CORS policy violation'
+    });
+  }
+  
+  // Default error
+  res.status(err.status || 500).json({
     success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// 404 handler (updated for Express 5.x)
+app.use((req, res, next) => {
   res.status(404).json({
     success: false,
     message: 'Route not found'
@@ -107,18 +227,23 @@ app.use('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/artisan_management';
 
 // Start server
 const startServer = async () => {
   try {
-    await connectDB(MONGO_URI);
-    console.log('✅ Connected to MongoDB successfully');
+    // Initialize dual database connections
+    await connectDualDB();
+    console.log('✅ Connected to MongoDB databases successfully');
+    
+    // Initialize backup service
+    const backupService = new MongoBackupService();
+    console.log('🔄 Backup service initialized');
     
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`📱 API available at: http://localhost:${PORT}`);
       console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`💾 Backup management: http://localhost:${PORT}/api/backups`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);

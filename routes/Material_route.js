@@ -18,7 +18,7 @@ router.get('/supplier/:supplierId', MaterialController.getMaterialsBySupplier);
 router.get('/inventory/low-stock', MaterialController.getLowStockMaterials);
 
 // Search materials
-router.get('/search', MaterialController.searchMaterials); // Changed from '/search/materials'
+router.get('/search/materials', MaterialController.searchMaterials);
 
 // Get material categories
 router.get('/categories/all', MaterialController.getMaterialCategories);

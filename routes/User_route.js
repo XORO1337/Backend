@@ -15,7 +15,7 @@ router.get('/email/:email', UserController.getUserByEmail);
 router.get('/role/:role', UserController.getUsersByRole);
 
 // Search users
-router.get('/search', UserController.searchUsers); // Changed from '/search/users'
+router.get('/search/users', UserController.searchUsers);
 
 // Get user by ID (must come after specific routes)
 router.get('/:id', UserController.getUserById);

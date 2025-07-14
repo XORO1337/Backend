@@ -20,8 +20,8 @@ router.get('/status/:status', ProductController.getProductsByStatus);
 router.get('/inventory/low-stock', ProductController.getLowStockProducts);
 
 // Search operations
-router.get('/search', ProductController.searchProducts);  // Changed from '/search/products'
-router.get('/search/price-range', ProductController.getProductsByPriceRange);  // Changed from '/search/by-price-range'
+router.get('/search/products', ProductController.searchProducts);
+router.get('/search/by-price-range', ProductController.getProductsByPriceRange);
 
 // Analytics
 router.get('/analytics/categories', ProductController.getProductCategories);

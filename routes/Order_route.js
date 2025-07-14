@@ -28,7 +28,7 @@ router.get('/analytics/by-date-range', OrderController.getOrdersByDateRange);
 router.get('/analytics/summary', OrderController.getOrderSummary);
 
 // Search operations
-router.get('/search', OrderController.searchOrders);
+router.get('/search/orders', OrderController.searchOrders);
 
 // ID-based operations (must come after specific routes)
 router.get('/:id', OrderController.getOrderById);

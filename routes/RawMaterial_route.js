@@ -27,7 +27,7 @@ router.get('/analytics/by-date-range', RawMaterialController.getRawMaterialOrder
 router.get('/analytics/summary', RawMaterialController.getRawMaterialOrderSummary);
 
 // Search operations
-router.get('/search', RawMaterialController.searchRawMaterialOrders); // Changed from '/search/orders'
+router.get('/search/orders', RawMaterialController.searchRawMaterialOrders);
 
 // Bulk operations
 router.post('/bulk/create', RawMaterialController.createBulkRawMaterialOrders);

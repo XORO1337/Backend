@@ -1,46 +1,87 @@
 # Artisan Management System Backend
 
-A comprehensive backend API for managing artisans, distributors, products, orders, raw materials, and inventory in an artisan marketplace system.
+A comprehensive backend API for a marketplace application supporting artisans, distributors, and customers with full authentication, authorization, and identity verification capabilities.
 
-## Features
+## 🌟 Key Features
 
-- **User Management**: User registration, authentication, and profile management
-- **Artisan Profiles**: Complete artisan profile management with skills and regions
-- **Distributor Management**: Distributor profiles with distribution areas
-- **Product Management**: Product catalog with categories, pricing, and stock management
-- **Order Management**: Order processing, status tracking, and payment management
-- **Raw Material Orders**: Raw material ordering system for artisans
-- **Material Management**: Raw material catalog and stock management
-- **Inventory Management**: Comprehensive inventory tracking for artisans
+### Authentication & Authorization
+- **Multi-Authentication Methods**: Phone number + password, Google OAuth 2.0
+- **OTP Verification**: Phone number verification using Twilio
+- **JWT Security**: Access tokens + refresh tokens with secure HTTP-only cookies
+- **Role-Based Access Control**: Customer, Artisan, Distributor, Admin roles
+- **Account Security**: Rate limiting, account lockout, password strength validation
 
-## Tech Stack
+### Identity Verification System
+- **Document Upload**: Aadhaar Card, Driver's License, PAN Card support
+- **Admin Review Process**: Manual verification workflow
+- **Seller Protection**: Only verified artisans/distributors can sell products
+- **Secure Storage**: Encrypted document storage with access controls
 
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **Password Hashing**: bcryptjs
-- **Environment Variables**: dotenv
+### Address Management
+- **Complete Address System**: House No, Street, City, District, PinCode
+- **Multiple Addresses**: Support for multiple delivery addresses per user
+- **Order Requirements**: Mandatory address verification before order placement
+- **Address Validation**: Format validation and PinCode verification
 
-## Installation
+### Marketplace Features
+- **Public Browsing**: Browse products and search users without authentication
+- **Profile Viewing**: View artisan/distributor profiles publicly
+- **Advanced Search**: Search by skills, region, name with pagination
+- **Role-Specific Dashboards**: Different dashboards based on user role
 
-1. Clone the repository:
+### Security & Compliance
+- **Rate Limiting**: Request throttling with role-based limits
+- **Input Validation**: Comprehensive validation for all endpoints
+- **CORS Protection**: Configurable cross-origin resource sharing
+- **Helmet Security**: Security headers and protection
+- **GDPR Ready**: Data privacy and consent management
+
+## 🏗️ Tech Stack
+
+- **Runtime**: Node.js (v16+)
+- **Framework**: Express.js (v5.1.0)
+- **Database**: MongoDB with Mongoose ODM (v8.16.1)
+- **Authentication**: JWT + Passport.js + Google OAuth 2.0
+- **Security**: bcryptjs, helmet, express-rate-limit
+- **Validation**: express-validator
+- **File Upload**: multer
+- **OTP Service**: Twilio Verify API
+- **Environment**: dotenv
+
+## 📚 Documentation
+
+- **[Setup Guide](SETUP_GUIDE.md)** - Complete installation and configuration guide
+- **[API Documentation](API_DOCUMENTATION.md)** - Comprehensive API reference
+- **[Authentication Guide](AUTHENTICATION_DOCUMENTATION.md)** - Detailed authentication system overview
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js (v16 or higher)
+- MongoDB (v4.4 or higher)
+- Twilio account (for OTP verification)
+- Google OAuth credentials (optional)
+
+### Installation
+
+1. **Clone the repository:**
 ```bash
 git clone <repository-url>
 cd Backend
 ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 ```bash
 npm install
 ```
 
-3. Set up environment variables:
+3. **Environment setup:**
 ```bash
-cp .env.example .env
-# Edit .env file with your configuration
+cp env.template .env
+# Edit .env with your configuration
 ```
 
-4. Start the server:
+4. **Start the server:**
 ```bash
 # Development mode
 npm run dev
@@ -48,6 +89,247 @@ npm run dev
 # Production mode
 npm start
 ```
+
+5. **Verify installation:**
+```bash
+curl http://localhost:3000/api/health
+```
+
+## 🔐 Authentication System Overview
+
+### Supported Authentication Methods
+1. **Phone + Password**: Traditional registration with phone verification
+2. **Google OAuth 2.0**: Seamless Google account integration
+3. **OTP Verification**: Phone number verification for security
+
+### User Roles & Permissions
+
+| Role | Browsing | Ordering | Dashboard | Verification Required | Selling |
+|------|----------|----------|-----------|----------------------|---------|
+| **Customer** | ✅ Public | ✅ With Address | ❌ | ❌ | ❌ |
+| **Artisan** | ✅ Public | ❌ | ✅ | ✅ For Selling | ✅ |
+| **Distributor** | ✅ Public | ❌ | ✅ | ✅ For Selling | ✅ |
+| **Admin** | ✅ Full Access | ✅ | ✅ | ❌ | ✅ |
+
+### Security Features
+- **JWT Tokens**: 1-hour access tokens + 7-day refresh tokens
+- **Rate Limiting**: 100 general / 5 auth / 3 OTP requests per 15 minutes
+- **Account Lockout**: 5 failed attempts = 2-hour lockout
+- **Password Requirements**: 8+ chars, mixed case, numbers, special characters
+- **Input Validation**: Comprehensive validation for all endpoints
+
+## 📋 Core API Endpoints
+
+### Authentication
+```
+POST   /api/auth/register           # Register with phone
+POST   /api/auth/login              # Login with phone/email
+GET    /api/auth/google             # Google OAuth
+POST   /api/auth/send-otp           # Send OTP
+POST   /api/auth/verify-otp         # Verify OTP
+POST   /api/auth/refresh-token      # Refresh access token
+GET    /api/auth/profile            # Get user profile
+POST   /api/auth/logout             # Logout
+```
+
+### Address Management
+```
+POST   /api/auth/addresses          # Add address
+GET    /api/auth/addresses          # Get all addresses
+GET    /api/auth/addresses/default  # Get default address
+PUT    /api/auth/addresses/:id      # Update address
+DELETE /api/auth/addresses/:id      # Delete address
+```
+
+### Identity Verification
+```
+POST   /api/auth/verification/upload           # Upload document
+GET    /api/auth/verification/status           # Get verification status
+GET    /api/auth/verification/documents        # Get documents
+PATCH  /api/auth/admin/verifications/:id       # Admin review
+```
+
+### Public Search
+```
+GET    /api/users/search                      # Search users
+GET    /api/artisans/search/skills            # Search by skills
+GET    /api/artisans/search/region            # Search by region
+```
+
+## 🛡️ Security Best Practices
+
+### Environment Variables
+```env
+# Strong JWT secrets (64+ characters)
+JWT_ACCESS_SECRET=your_very_long_and_random_secret_key
+JWT_REFRESH_SECRET=another_very_long_and_random_secret_key
+
+# Secure database connection
+MONGO_URI=mongodb://username:password@host:port/database
+
+# Production settings
+NODE_ENV=production
+COOKIE_SECURE=true
+```
+
+### Rate Limiting Configuration
+- **General API**: 100 requests per 15 minutes
+- **Authentication**: 5 requests per 15 minutes  
+- **OTP Endpoints**: 3 requests per 15 minutes
+- **Account lockout**: 5 failed login attempts
+
+### File Upload Security
+- **Allowed types**: JPEG, PNG, PDF only
+- **Size limit**: 5MB maximum
+- **Secure storage**: Encrypted file storage
+- **Access control**: Admin-only document access
+
+## 📊 Database Schema
+
+### User Model
+```javascript
+{
+  name: String,
+  email: String (unique, sparse),
+  phone: String (unique, sparse),
+  password: String (hashed),
+  role: ['customer', 'artisan', 'distributor', 'admin'],
+  addresses: [AddressSchema],
+  authProvider: ['local', 'google'],
+  isEmailVerified: Boolean,
+  isPhoneVerified: Boolean,
+  isIdentityVerified: Boolean,
+  verificationDocuments: [DocumentSchema],
+  refreshTokens: [TokenSchema],
+  loginAttempts: Number,
+  lockUntil: Date
+}
+```
+
+### Address Schema
+```javascript
+{
+  houseNo: String (required),
+  street: String (required),
+  city: String (required),
+  district: String (required),
+  pinCode: String (required, 6 digits),
+  isDefault: Boolean
+}
+```
+
+## 🔧 Development
+
+### Project Structure
+```
+Backend/
+├── app.js                 # Main application
+├── package.json          # Dependencies
+├── config/
+│   └── passport.js       # Passport configuration
+├── controllers/          # Business logic
+├── middleware/           # Auth, validation, rate limiting
+├── models/              # Database schemas
+├── routes/              # API routes
+├── services/            # External services
+└── uploads/             # File storage
+```
+
+### Adding New Features
+1. **New Routes**: Add to appropriate route file
+2. **Controllers**: Implement business logic
+3. **Validation**: Add input validation
+4. **Tests**: Create comprehensive tests
+5. **Documentation**: Update API docs
+
+### Testing
+```bash
+# Manual testing
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test","phone":"+919876543210","password":"Test123!","role":"customer"}'
+
+# Health check
+curl http://localhost:3000/api/health
+```
+
+## 🌐 Production Deployment
+
+### Environment Setup
+- Set `NODE_ENV=production`
+- Use strong secrets and secure database
+- Enable HTTPS with SSL certificates
+- Configure reverse proxy (Nginx)
+- Set up monitoring and logging
+
+### Recommended Architecture
+```
+Internet → Nginx (SSL) → Node.js App → MongoDB
+                      ↓
+                Cloud Storage (Documents)
+                      ↓
+                External APIs (Twilio, Google)
+```
+
+## 📈 Monitoring & Maintenance
+
+### Health Checks
+- **API Health**: `GET /api/health`
+- **Database**: Connection status monitoring
+- **External Services**: Twilio/Google API status
+- **File Storage**: Upload directory monitoring
+
+### Logging
+- Authentication events
+- Failed login attempts
+- API rate limit violations
+- Error tracking and reporting
+
+### Backup Strategy
+- Daily MongoDB backups
+- Document file backups
+- Environment configuration backups
+- Recovery procedures documentation
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
+
+### Code Standards
+- Use ESLint for code linting
+- Follow RESTful API conventions
+- Write comprehensive tests
+- Document new features
+- Follow security best practices
+
+## 📄 License
+
+This project is licensed under the ISC License.
+
+## 🆘 Support
+
+- **Documentation**: Check [SETUP_GUIDE.md](SETUP_GUIDE.md) for setup issues
+- **API Reference**: See [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+- **Authentication**: Review [AUTHENTICATION_DOCUMENTATION.md](AUTHENTICATION_DOCUMENTATION.md)
+
+## 🎯 Roadmap
+
+- [ ] Email verification system
+- [ ] Multi-factor authentication
+- [ ] Advanced analytics dashboard
+- [ ] Automated document verification
+- [ ] Mobile app API optimization
+- [ ] Microservices architecture
+- [ ] Real-time notifications
+- [ ] Advanced search with Elasticsearch
+
+---
+
+**Built with ❤️ for the artisan community**
 
 ## API Endpoints
 
