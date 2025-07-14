@@ -109,8 +109,13 @@ const validateResourceOwnership = (resourceType) => {
       }
 
       if (!hasAccess) {
-        // Log potential malicious attempt
-        console.warn(`⚠️ Unauthorized access attempt: User ${userId} (${req.user.role}) tried to access ${resourceType} ${resourceId}`);
+        // Log potential malicious attempt with enhanced details
+        const violation = `Unauthorized ${resourceType} access: User ${userId} (${req.user.role}) tried to access ${resourceType} ${resourceId}`;
+        console.warn(`⚠️ ${violation}`);
+        
+        // Store security violation for request logger
+        res.locals.securityViolation = violation;
+        res.locals.errorMessage = `Access denied. You can only access your own ${resourceType} resources.`;
         
         return res.status(403).json({
           success: false,
@@ -295,7 +300,8 @@ const detectMaliciousRequests = async (req, res, next) => {
 
     // If suspicious patterns detected, log and potentially block
     if (suspiciousPatterns.length > 0) {
-      console.warn(`🚨 Suspicious request detected from user ${userId} (${userRole}):`, {
+      const violation = `Suspicious patterns detected: ${suspiciousPatterns.join(', ')} from ${req.ip}`;
+      console.warn(`🚨 ${violation}`, {
         patterns: suspiciousPatterns,
         url: req.originalUrl,
         method: req.method,
@@ -304,9 +310,13 @@ const detectMaliciousRequests = async (req, res, next) => {
         timestamp: new Date().toISOString()
       });
 
+      // Store security violation for request logger
+      res.locals.securityViolation = violation;
+      
       // For severe patterns, block the request
       const severePatterns = ['SQL_INJECTION', 'NOSQL_INJECTION', 'PATH_TRAVERSAL'];
       if (suspiciousPatterns.some(pattern => severePatterns.includes(pattern))) {
+        res.locals.errorMessage = 'Request blocked due to security concerns';
         return res.status(400).json({
           success: false,
           message: 'Request blocked due to security concerns',

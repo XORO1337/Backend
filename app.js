@@ -16,18 +16,25 @@ const rawMaterialRoutes = require('./routes/RawMaterial_route');
 const materialRoutes = require('./routes/Material_route');
 const inventoryRoutes = require('./routes/Inventory_route');
 const backupRoutes = require('./routes/Backup_route');
+const devLogsRoutes = require('./routes/DevLogs_route');
 
 // Import middleware
 const { generalLimit } = require('./middleware/rateLimiting');
 const passport = require('./config/passport');
 // Import enhanced security middleware
 const { detectMaliciousRequests } = require('./middleware/rbac');
+// Import request logger
+const RequestLogger = require('./middleware/requestLogger');
 
 // Database connection
 const { connectDualDB } = require('./db/connect');
 const MongoBackupService = require('./services/mongoBackupService');
 
 const app = express();
+
+// Initialize request logger
+const requestLogger = new RequestLogger();
+app.locals.requestLogger = requestLogger;
 
 // Security middleware
 app.use(helmet({
@@ -40,6 +47,12 @@ app.use(helmet({
     },
   },
 }));
+
+// Trust proxy for accurate IP detection
+app.set('trust proxy', true);
+
+// Request logging middleware (FIRST - before any other middleware)
+app.use(requestLogger.middleware());
 
 // Global security scanning (applied to all routes)
 app.use(detectMaliciousRequests);
@@ -121,6 +134,9 @@ app.use('/api/distributors', distributorRoutes);
 
 console.log('Defining backup routes...');
 app.use('/api/backups', backupRoutes);
+
+console.log('Defining dev logs routes...');
+app.use('/api/dev', devLogsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

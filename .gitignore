@@ -17,3 +17,11 @@ coverage
 *.sublime-workspace
 *.sublime-project
 *.iml
+
+# Security logs (never commit)
+logs/
+logs/*
+access.log
+*.access.log
+audit.log
+*.audit.log

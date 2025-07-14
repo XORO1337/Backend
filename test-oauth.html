@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Google OAuth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .btn {
+            background-color: #4285f4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background-color: #357ae8;
+        }
+        .info {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Test Google OAuth Integration</h1>
+    
+    <div class="info">
+        <h3>Current Configuration:</h3>
+        <ul>
+            <li><strong>Client ID:</strong> 988113983317-4armihmvukshj3fovj0avuhoc9apl33p.apps.googleusercontent.com</li>
+            <li><strong>Callback URL:</strong> http://localhost:3000/api/auth/google/callback</li>
+            <li><strong>Backend URL:</strong> http://localhost:3000</li>
+        </ul>
+    </div>
+
+    <div class="error" id="error-message" style="display: none;">
+        <h3>❌ OAuth Error Detected</h3>
+        <p id="error-details"></p>
+    </div>
+
+    <div class="success" id="success-message" style="display: none;">
+        <h3>✅ OAuth Success</h3>
+        <p id="success-details"></p>
+    </div>
+
+    <h3>Test OAuth Flow:</h3>
+    <a href="http://localhost:3000/api/auth/google" class="btn">🚀 Sign in with Google</a>
+
+    <div class="info">
+        <h3>📋 Troubleshooting Steps:</h3>
+        <ol>
+            <li><strong>Check Google Cloud Console:</strong>
+                <ul>
+                    <li>Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                    <li>Navigate to APIs & Services → Credentials</li>
+                    <li>Find your OAuth 2.0 Client ID</li>
+                    <li>Ensure "Authorized redirect URIs" contains: <code>http://localhost:3000/api/auth/google/callback</code></li>
+                </ul>
+            </li>
+            <li><strong>Environment Variables:</strong>
+                <ul>
+                    <li>✅ GOOGLE_CLIENT_ID is set</li>
+                    <li>✅ GOOGLE_CLIENT_SECRET is set</li>
+                    <li>✅ GOOGLE_CALLBACK_URL is correct</li>
+                </ul>
+            </li>
+            <li><strong>Backend Server:</strong>
+                <ul>
+                    <li>✅ Server is running on port 3000</li>
+                    <li>✅ OAuth routes are configured</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <script>
+        // Check for OAuth callback parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        const token = urlParams.get('token');
+
+        if (error) {
+            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('error-details').textContent = `Error: ${error}`;
+        } else if (token) {
+            document.getElementById('success-message').style.display = 'block';
+            document.getElementById('success-details').textContent = `Successfully authenticated! Token received.`;
+        }
+    </script>
+</body>
+</html>
