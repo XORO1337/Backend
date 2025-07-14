@@ -1,5 +1,13 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+// Import enhanced RBAC middleware
+const {
+  validateResourceOwnership,
+  requirePermission,
+  detectMaliciousRequests,
+  preventCrossUserAccess,
+  securityAuditLogger
+} = require('./rbac');
 
 // Generate access token
 const generateAccessToken = (payload) => {
@@ -184,5 +192,11 @@ module.exports = {
   optionalAuth,
   authorizeRoles,
   requireIdentityVerification,
-  requireCompleteAddress
+  requireCompleteAddress,
+  // Enhanced RBAC exports
+  validateResourceOwnership,
+  requirePermission,
+  detectMaliciousRequests,
+  preventCrossUserAccess,
+  securityAuditLogger
 };

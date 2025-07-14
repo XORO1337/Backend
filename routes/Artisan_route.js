@@ -1,7 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const ArtisanService = require('../services/Artisan_serv');
-const { authenticateToken, authorizeRoles, requireIdentityVerification, optionalAuth } = require('../middleware/auth');
+const { 
+  authenticateToken, 
+  authorizeRoles, 
+  requireIdentityVerification, 
+  optionalAuth,
+  validateResourceOwnership,
+  requirePermission,
+  detectMaliciousRequests,
+  preventCrossUserAccess,
+  securityAuditLogger
+} = require('../middleware/auth');
 
 // Public routes (anyone can search and view artisan profiles)
 router.get('/search/skills', optionalAuth, async (req, res) => {
@@ -119,69 +129,75 @@ router.get('/user/:userId', optionalAuth, async (req, res) => {
   }
 });
 
-// Protected routes (only for authenticated artisans)
-router.post('/', authenticateToken, authorizeRoles('artisan'), async (req, res) => {
-  try {
-    // Auto-assign userId from authenticated user
-    req.body.userId = req.user.id;
-    
-    const artisan = await ArtisanService.createArtisanProfile(req.body);
-    res.status(201).json({
-      success: true,
-      message: 'Artisan profile created successfully',
-      data: artisan
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-// Routes that require identity verification for selling
-router.put('/:id', authenticateToken, authorizeRoles('artisan'), requireIdentityVerification, async (req, res) => {
-  try {
-    // Ensure artisan can only update their own profile
-    const existingArtisan = await ArtisanService.getArtisanProfileById(req.params.id);
-    if (existingArtisan.userId.toString() !== req.user.id) {
-      return res.status(403).json({
+// Protected routes (only for authenticated artisans with enhanced security)
+router.post('/', 
+  authenticateToken, 
+  authorizeRoles('artisan'), 
+  detectMaliciousRequests,
+  requirePermission('create', 'artisan'),
+  securityAuditLogger('create', 'artisan'),
+  async (req, res) => {
+    try {
+      // Auto-assign userId from authenticated user
+      req.body.userId = req.user.id;
+      
+      const artisan = await ArtisanService.createArtisanProfile(req.body);
+      res.status(201).json({
+        success: true,
+        message: 'Artisan profile created successfully',
+        data: artisan
+      });
+    } catch (error) {
+      res.status(400).json({
         success: false,
-        message: 'You can only update your own profile'
+        message: error.message
       });
     }
+  });
 
-    const artisan = await ArtisanService.updateArtisanProfile(req.params.id, req.body);
-    res.status(200).json({
-      success: true,
-      message: 'Artisan profile updated successfully',
-      data: artisan
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-router.put('/user/:userId', authenticateToken, authorizeRoles('artisan'), async (req, res) => {
-  try {
-    // Ensure artisan can only update their own profile
-    if (req.params.userId !== req.user.id) {
-      return res.status(403).json({
+// Routes that require identity verification for selling with enhanced security
+router.put('/:id', 
+  authenticateToken, 
+  authorizeRoles('artisan'), 
+  detectMaliciousRequests,
+  validateResourceOwnership('artisan'),
+  requirePermission('update', 'artisan'),
+  requireIdentityVerification,
+  securityAuditLogger('update', 'artisan'),
+  async (req, res) => {
+    try {
+      // Resource ownership already validated by middleware
+      const artisan = await ArtisanService.updateArtisanProfile(req.params.id, req.body);
+      res.status(200).json({
+        success: true,
+        message: 'Artisan profile updated successfully',
+        data: artisan
+      });
+    } catch (error) {
+      res.status(400).json({
         success: false,
-        message: 'You can only update your own profile'
+        message: error.message
       });
     }
+  });
 
-    const artisan = await ArtisanService.updateArtisanProfileByUserId(req.params.userId, req.body);
-    res.status(200).json({
-      success: true,
-      message: 'Artisan profile updated successfully',
-      data: artisan
-    });
-  } catch (error) {
+router.put('/user/:userId', 
+  authenticateToken, 
+  authorizeRoles('artisan'), 
+  detectMaliciousRequests,
+  preventCrossUserAccess,
+  requirePermission('update', 'artisan'),
+  securityAuditLogger('update', 'artisan'),
+  async (req, res) => {
+    try {
+      // Cross-user access already validated by middleware
+      const artisan = await ArtisanService.updateArtisanProfileByUserId(req.params.userId, req.body);
+      res.status(200).json({
+        success: true,
+        message: 'Artisan profile updated successfully',
+        data: artisan
+      });
+    } catch (error) {
     res.status(400).json({
       success: false,
       message: error.message
@@ -222,96 +238,94 @@ router.delete('/user/:userId', authenticateToken, authorizeRoles('admin'), async
   }
 });
 
-// Protected routes for profile management (require identity verification for certain actions)
-router.patch('/:id/bank-details', authenticateToken, authorizeRoles('artisan'), requireIdentityVerification, async (req, res) => {
-  try {
-    // Ensure artisan can only update their own bank details
-    const existingArtisan = await ArtisanService.getArtisanProfileById(req.params.id);
-    if (existingArtisan.userId.toString() !== req.user.id) {
-      return res.status(403).json({
+// Protected routes for profile management with enhanced security
+router.patch('/:id/bank-details', 
+  authenticateToken, 
+  authorizeRoles('artisan'), 
+  detectMaliciousRequests,
+  validateResourceOwnership('artisan'),
+  requirePermission('update', 'artisan'),
+  requireIdentityVerification,
+  securityAuditLogger('update', 'artisan'),
+  async (req, res) => {
+    try {
+      // Resource ownership already validated by middleware
+      const artisan = await ArtisanService.updateBankDetails(req.params.id, req.body);
+      res.status(200).json({
+        success: true,
+        message: 'Bank details updated successfully',
+        data: artisan
+      });
+    } catch (error) {
+      res.status(400).json({
         success: false,
-        message: 'You can only update your own bank details'
+        message: error.message
       });
     }
+  });
 
-    const artisan = await ArtisanService.updateBankDetails(req.params.id, req.body);
-    res.status(200).json({
-      success: true,
-      message: 'Bank details updated successfully',
-      data: artisan
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
+router.patch('/:id/skills/add', 
+  authenticateToken, 
+  authorizeRoles('artisan'), 
+  detectMaliciousRequests,
+  validateResourceOwnership('artisan'),
+  requirePermission('update', 'artisan'),
+  securityAuditLogger('update', 'artisan'),
+  async (req, res) => {
+    try {
+      const { skill } = req.body;
+      if (!skill) {
+        return res.status(400).json({
+          success: false,
+          message: 'Skill is required'
+        });
+      }
 
-router.patch('/:id/skills/add', authenticateToken, authorizeRoles('artisan'), async (req, res) => {
-  try {
-    const { skill } = req.body;
-    if (!skill) {
-      return res.status(400).json({
+      // Resource ownership already validated by middleware
+      const artisan = await ArtisanService.addSkill(req.params.id, skill);
+      res.status(200).json({
+        success: true,
+        message: 'Skill added successfully',
+        data: artisan
+      });
+    } catch (error) {
+      res.status(400).json({
         success: false,
-        message: 'Skill is required'
+        message: error.message
       });
     }
+  });
 
-    // Ensure artisan can only update their own skills
-    const existingArtisan = await ArtisanService.getArtisanProfileById(req.params.id);
-    if (existingArtisan.userId.toString() !== req.user.id) {
-      return res.status(403).json({
+router.patch('/:id/skills/remove', 
+  authenticateToken, 
+  authorizeRoles('artisan'), 
+  detectMaliciousRequests,
+  validateResourceOwnership('artisan'),
+  requirePermission('update', 'artisan'),
+  securityAuditLogger('update', 'artisan'),
+  async (req, res) => {
+    try {
+      const { skill } = req.body;
+      if (!skill) {
+        return res.status(400).json({
+          success: false,
+          message: 'Skill is required'
+        });
+      }
+
+      // Resource ownership already validated by middleware
+      const artisan = await ArtisanService.removeSkill(req.params.id, skill);
+      res.status(200).json({
+        success: true,
+        message: 'Skill removed successfully',
+        data: artisan
+      });
+    } catch (error) {
+      res.status(400).json({
         success: false,
-        message: 'You can only update your own skills'
+        message: error.message
       });
     }
-
-    const artisan = await ArtisanService.addSkill(req.params.id, skill);
-    res.status(200).json({
-      success: true,
-      message: 'Skill added successfully',
-      data: artisan
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
-
-router.patch('/:id/skills/remove', authenticateToken, authorizeRoles('artisan'), async (req, res) => {
-  try {
-    const { skill } = req.body;
-    if (!skill) {
-      return res.status(400).json({
-        success: false,
-        message: 'Skill is required'
-      });
-    }
-
-    // Ensure artisan can only update their own skills
-    const existingArtisan = await ArtisanService.getArtisanProfileById(req.params.id);
-    if (existingArtisan.userId.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: 'You can only update your own skills'
-      });
-    }
-
-    const artisan = await ArtisanService.removeSkill(req.params.id, skill);
-    res.status(200).json({
-      success: true,
-      message: 'Skill removed successfully',
-      data: artisan
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      message: error.message
-    });
-  }
-});
+  });
 
 module.exports = router;

@@ -23,9 +23,15 @@ const connectDB = async (mongo_URI, connectionName = 'default') => {
 // Connect to both Atlas and Local MongoDB
 const connectDualDB = async () => {
     try {
-        // Connect to Atlas MongoDB
-        if (process.env.MONGO_URI_ATLAS) {
-            connections.atlas = await connectDB(process.env.MONGO_URI_ATLAS, 'Atlas');
+        // Connect to Atlas MongoDB (if available and configured)
+        if (process.env.MONGO_URI_ATLAS && process.env.MONGO_URI_ATLAS !== 'mongodb+srv://username:password@cluster.mongodb.net/artisan_management?retryWrites=true&w=majority') {
+            try {
+                connections.atlas = await connectDB(process.env.MONGO_URI_ATLAS, 'Atlas');
+            } catch (atlasError) {
+                console.warn('Atlas connection failed, continuing with local only:', atlasError.message);
+            }
+        } else {
+            console.log('Atlas MongoDB connection skipped (not configured or using placeholder credentials)');
         }
 
         // Connect to Local MongoDB
@@ -33,7 +39,9 @@ const connectDualDB = async () => {
             connections.local = await connectDB(process.env.MONGO_URI_LOCAL, 'Local');
         }
 
-        console.log('Dual MongoDB connections established successfully');
+        const atlasStatus = connections.atlas ? 'Connected' : 'Skipped';
+        const localStatus = connections.local ? 'Connected' : 'Failed';
+        console.log(`Dual MongoDB connections established successfully - Atlas: ${atlasStatus}, Local: ${localStatus}`);
         return connections;
     } catch (error) {
         console.error('Error establishing dual MongoDB connections:', error);

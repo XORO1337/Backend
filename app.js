@@ -20,6 +20,8 @@ const backupRoutes = require('./routes/Backup_route');
 // Import middleware
 const { generalLimit } = require('./middleware/rateLimiting');
 const passport = require('./config/passport');
+// Import enhanced security middleware
+const { detectMaliciousRequests } = require('./middleware/rbac');
 
 // Database connection
 const { connectDualDB } = require('./db/connect');
@@ -38,6 +40,9 @@ app.use(helmet({
     },
   },
 }));
+
+// Global security scanning (applied to all routes)
+app.use(detectMaliciousRequests);
 
 // Rate limiting
 app.use(generalLimit);

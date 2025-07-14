@@ -7,7 +7,10 @@
     "dev": "nodemon app.js",
     "test": "jest --detectOpenHandles",
     "test:auth": "jest test-auth-system.js --detectOpenHandles",
-    "test:watch": "jest --watch --detectOpenHandles"
+    "test:security": "jest test-rbac-security.js --detectOpenHandles",
+    "test:watch": "jest --watch --detectOpenHandles",
+    "security:demo": "node security-demo.js",
+    "security:test": "npm run test:security"
   },
   "keywords": [
     "artisan",
