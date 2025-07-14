@@ -25,3 +25,13 @@ access.log
 *.access.log
 audit.log
 *.audit.log
+node_modules/
+dist/
+coverage/
+.vscode/
+.idea/
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo   
