@@ -4,11 +4,12 @@ const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const User = require('../models/User');
 
-// Google OAuth Strategy
+// Google OAuth Strategy with scope included
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL_CODESPACES || process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback"
+  callbackURL: process.env.GOOGLE_CALLBACK_URL_CODESPACES || process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback",
+  scope: ['profile', 'email']  // Added scope here to ensure it's always included
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     // Check if user already exists with this Google ID
