@@ -66,7 +66,7 @@ const userSchema = new Schema({
     unique: true,
     sparse: true,
     trim: true,
-    match: [/^[+]?[\d\s-]{10,15}$/, 'Please enter a valid phone number']
+    match: [/^\+91[6-9]\d{9}$/, 'Please enter a valid phone number in E.164 format (+91xxxxxxxxxx)']
   },
   role: {
     type: String,

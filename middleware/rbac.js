@@ -357,12 +357,12 @@ const preventCrossUserAccess = (req, res, next) => {
   next();
 };
 
-// Rate limiting per role
+// Rate limiting per role - Lenient for production testing
 const roleBasedRateLimit = {
-  customer: { windowMs: 15 * 60 * 1000, max: 100 }, // 100 requests per 15 minutes
-  artisan: { windowMs: 15 * 60 * 1000, max: 200 },  // 200 requests per 15 minutes
-  distributor: { windowMs: 15 * 60 * 1000, max: 200 }, // 200 requests per 15 minutes
-  admin: { windowMs: 15 * 60 * 1000, max: 1000 }    // 1000 requests per 15 minutes
+  customer: { windowMs: 15 * 60 * 1000, max: 500 }, // Increased from 100 to 500 requests per 15 minutes
+  artisan: { windowMs: 15 * 60 * 1000, max: 1000 },  // Increased from 200 to 1000 requests per 15 minutes
+  distributor: { windowMs: 15 * 60 * 1000, max: 1000 }, // Increased from 200 to 1000 requests per 15 minutes
+  admin: { windowMs: 15 * 60 * 1000, max: 5000 }    // Increased from 1000 to 5000 requests per 15 minutes
 };
 
 // Security audit logging

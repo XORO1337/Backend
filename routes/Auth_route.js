@@ -8,6 +8,7 @@ const { authLimit, otpLimit, generalLimit } = require('../middleware/rateLimitin
 const {
   validateUserRegistration,
   validateUserLogin,
+  validateOTPPhone,
   validateOTP,
   validateAddress,
   validateIdentityDocument,
@@ -20,6 +21,16 @@ const {
 
 // ========== AUTHENTICATION ROUTES ==========
 
+// Temporary debug route to test OTP without validation
+router.post('/debug-send-otp', (req, res) => {
+  console.log('Debug OTP request body:', req.body);
+  res.json({
+    success: true,
+    message: 'Debug route working',
+    body: req.body
+  });
+});
+
 // Register with phone number
 router.post('/register', authLimit, validateUserRegistration, AuthController.registerWithPhone);
 
@@ -29,12 +40,12 @@ router.post('/login', authLimit, validateUserLogin, AuthController.login);
 // Google OAuth routes
 router.get('/google', AuthController.initiateGoogleAuth);
 router.get('/google/callback', AuthController.handleGoogleCallback);
+router.post('/complete-google-profile', authenticateToken, AuthController.completeGoogleProfile);
+
+
 
 // OTP routes
-router.post('/send-otp', otpLimit, validateOTP, AuthController.sendOTP);
-router.post('/verify-otp', authLimit, validateOTP, AuthController.verifyOTP);
-
-// Token management
+router.post('/send-otp', otpLimit, validateOTPPhone, AuthController.sendOTP);
 router.post('/refresh-token', generalLimit, AuthController.refreshToken);
 router.post('/logout', authenticateToken, AuthController.logout);
 router.post('/logout-all', authenticateToken, AuthController.logoutAll);

@@ -2,25 +2,33 @@ const twilio = require('twilio');
 
 class OTPService {
   constructor() {
-    this.client = twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
-    );
-    this.serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+    // Only initialize Twilio client if credentials are provided
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      this.client = twilio(
+        process.env.TWILIO_ACCOUNT_SID,
+        process.env.TWILIO_AUTH_TOKEN
+      );
+      this.serviceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+    } else {
+      this.client = null;
+      this.serviceSid = null;
+      console.log('🔧 OTP Service initialized in mock mode (no Twilio credentials)');
+    }
   }
 
   // Generate and send OTP
   async sendOTP(phoneNumber) {
     try {
-      // For development, you can use a mock implementation
-      if (process.env.NODE_ENV === 'development' && !process.env.TWILIO_ACCOUNT_SID) {
-        console.log(`Mock OTP for ${phoneNumber}: 123456`);
+      // Use mock implementation when no Twilio credentials available
+      if (!this.client || !this.serviceSid) {
+        console.log(`📱 Mock OTP for ${phoneNumber}: 123456`);
         return {
           success: true,
           sid: 'mock_sid_' + Date.now()
         };
       }
 
+      // Use Twilio for production
       const verification = await this.client.verify.v2
         .services(this.serviceSid)
         .verifications
@@ -29,6 +37,7 @@ class OTPService {
           channel: 'sms'
         });
 
+      console.log(`📱 OTP sent via Twilio to ${phoneNumber}`);
       return {
         success: true,
         sid: verification.sid
@@ -42,15 +51,16 @@ class OTPService {
   // Verify OTP
   async verifyOTP(phoneNumber, otpCode) {
     try {
-      // For development, accept 123456 as valid OTP
-      if (process.env.NODE_ENV === 'development' && !process.env.TWILIO_ACCOUNT_SID) {
-        console.log(`Mock OTP verification for ${phoneNumber}: ${otpCode}`);
+      // Use mock verification when no Twilio credentials available
+      if (!this.client || !this.serviceSid) {
+        console.log(`📱 Mock OTP verification for ${phoneNumber}: ${otpCode}`);
         return {
           success: otpCode === '123456',
           status: otpCode === '123456' ? 'approved' : 'pending'
         };
       }
 
+      // Use Twilio for production verification
       const verificationCheck = await this.client.verify.v2
         .services(this.serviceSid)
         .verificationChecks
@@ -59,6 +69,7 @@ class OTPService {
           code: otpCode
         });
 
+      console.log(`📱 OTP verified via Twilio for ${phoneNumber}: ${verificationCheck.status}`);
       return {
         success: verificationCheck.status === 'approved',
         status: verificationCheck.status

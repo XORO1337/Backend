@@ -41,12 +41,15 @@ passport.use(new GoogleStrategy({
       name: profile.displayName,
       email: profile.emails[0].value,
       authProvider: 'google',
-      role: 'customer', // Default role for Google sign-ups
+      role: 'customer', // Default role for Google sign-ups, can be updated in callback
       isEmailVerified: true,
       lastLogin: new Date()
     });
     
     await newUser.save();
+    
+    // Mark as new user for role-specific profile creation
+    newUser._isNewUser = true;
     done(null, newUser);
     
   } catch (error) {

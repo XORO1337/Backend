@@ -48,8 +48,8 @@ app.use(helmet({
   },
 }));
 
-// Trust proxy for accurate IP detection
-app.set('trust proxy', true);
+// Trust proxy for accurate IP detection (more specific for security)
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 
 // Request logging middleware (FIRST - before any other middleware)
 app.use(requestLogger.middleware());
@@ -92,6 +92,18 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Cookie parser
 app.use(cookieParser());
+
+// Session middleware for OAuth role persistence
+const session = require('express-session');
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 10 * 60 * 1000 // 10 minutes
+  }
+}));
 
 // Passport middleware
 app.use(passport.initialize());

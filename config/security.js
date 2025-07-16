@@ -72,12 +72,12 @@ const SECURITY_CONFIG = {
     }
   },
 
-  // Rate limiting per role (requests per window)
+  // Rate limiting per role (requests per window) - Lenient for production testing
   rateLimits: {
-    customer: { windowMs: 15 * 60 * 1000, max: 100 },
-    artisan: { windowMs: 15 * 60 * 1000, max: 200 },
-    distributor: { windowMs: 15 * 60 * 1000, max: 200 },
-    admin: { windowMs: 15 * 60 * 1000, max: 1000 }
+    customer: { windowMs: 15 * 60 * 1000, max: 500 }, // Increased from 100 to 500
+    artisan: { windowMs: 15 * 60 * 1000, max: 1000 }, // Increased from 200 to 1000
+    distributor: { windowMs: 15 * 60 * 1000, max: 1000 }, // Increased from 200 to 1000
+    admin: { windowMs: 15 * 60 * 1000, max: 5000 } // Increased from 1000 to 5000
   },
 
   // Security patterns to detect malicious requests
