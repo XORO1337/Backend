@@ -1,7 +1,7 @@
 // Direct test of the User model validation
 require('dotenv').config();
 const mongoose = require('mongoose');
-const User = require('./models/User');
+const User = require('../models/User');
 
 async function testUserValidation() {
   try {
